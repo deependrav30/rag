@@ -1,6 +1,8 @@
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import HumanMessage, SystemMessage
 
 load_dotenv()
 
@@ -38,3 +40,23 @@ print(f"User Query: {query}\n")
 print("--- Context ---")
 for i, doc in enumerate(relevant_docs, 1):
     print(f"Document {i}: \n{doc.page_content}")
+
+combined_input = f"""Based on the following documents, please answer this question: {query}
+
+Documents:
+{chr(10).join([f"- {doc.page_content}" for doc in relevant_docs])}
+
+Please provide a clear, helpful answer using only the information from the documents above. If you cannot find the answer in the documents, please respond with "I don't know"."""
+
+model = ChatOpenAI(model="gpt-4o", temperature=0)
+
+messages = [
+    SystemMessage(content="You are a helpful AI assistant that provides accurate information based on the provided documents."),
+    HumanMessage(content=combined_input),
+]
+
+result = model.invoke(messages)
+
+print("\n --- Generated Response ---")
+print("Content Only:")
+print(result.content)
